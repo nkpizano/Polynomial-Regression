@@ -90,7 +90,7 @@ div.csl-indent {
 <link href="Polynomial Regression_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="Polynomial Regression_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="Polynomial Regression_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="Polynomial Regression_files/libs/bootstrap/bootstrap-f17eefaa79f8079aff3a35304651a4b3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="Polynomial Regression_files/libs/bootstrap/bootstrap-fbfffa1a6db9b48581fafbaa7d5e8f2f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -133,6 +133,7 @@ window.Quarto = {
    
   <ul>
   <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#packages" id="toc-packages" class="nav-link" data-scroll-target="#packages">Packages</a></li>
   <li><a href="#define-polynomial-regression" id="toc-define-polynomial-regression" class="nav-link" data-scroll-target="#define-polynomial-regression">Define Polynomial Regression</a>
   <ul class="collapse">
   <li><a href="#hypotheses" id="toc-hypotheses" class="nav-link" data-scroll-target="#hypotheses">Hypotheses</a></li>
@@ -185,7 +186,10 @@ window.Quarto = {
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
 <p>In this module, we will review the polynomial regression model using simulated data inspired by a study on immersive virtual reality-based learning by <span class="citation" data-cites="huang2020">Huang et al. (<a href="#ref-huang2020" role="doc-biblioref">2020</a>)</span>. We will explore the curvilinear relationship between the time spent in the virtual learning environment and cognitive load when using modern technical teaching techniques.Futhermore, I will show you a couple of disagnostic tools for identifying outliers using Cook’s distance and leverage.</p>
-<p><img src="VR.jpg" class="img-fluid"> # Packages</p>
+<p><img src="VR.jpg" class="img-fluid"></p>
+</section>
+<section id="packages" class="level1">
+<h1>Packages</h1>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2) <span class="co">#use this package to create venn diagram </span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(grid) <span class="co">#use this package to create venn diagram </span></span>
