@@ -1,0 +1,296 @@
+---
+title: "Polynomial Regression"
+author: "Netasha K. Pizano"
+format: 
+  html:
+    theme: lumen 
+    code-copy: true
+    toc: true
+    toc-location: left
+    toc-depth: 3
+editor: visual
+bibliography: references.bib
+---
+
+## Overview
+
+In this module, we will review the polynomial regression model using simulated data inspired by a study on immersive virtual reality-based learning by @huang2020. We will explore the curvilinear relationship between the time spent in the virtual learning environment and cognitive load when using modern technical teaching techniques.Futhermore, I will show you a couple of disagnostic tools for identifying outliers using Cook's distance and leverage.
+
+# Packages
+
+```{r Package}
+#| message: false
+library(ggplot2) #use this package to create venn diagram 
+library(grid) #use this package to create venn diagram 
+library(dplyr) #use this package with ggplot to create graphs and summarize data 
+library(MASS) #use this package for creating multivariate normal distributions of variables 
+library(readr) #use this package for reading in the data that had a csv extension
+library(psych) #use this package for describe function one of my favorites for descriptive statistics. 
+library(patchwork) #use this package to print images side by side using a + symbol - so handy!
+library(MissMech) #use this package to run a Hawkin's test for MCAR, where normality is not assumed"
+library(naniar) #use this package to identify and visualization missing data 
+library(mice) #use this package to create imputed data sets 
+library(tidyverse) #use this package for cleaning data, using pipes %>%, so many packages and functions in one library <3
+library(rstatix) #use this package to run boxplots and identify outliers
+```
+
+# Define Polynomial Regression
+
+Goal: Polynomial regression models are used to investigate the relationship between a dependent variable, also referred to as a response variable, with an explanatory variable that has been taken to some exponential power.
+
+-   Polynomial regression is a certain type of multiple linear regression, and an extension of regression.
+-   Unlike multiple regression, polynomial regression includes one explanatory that has been taken to some degree of power.
+-   The polynomial regression model consist of successive power terms. Each model will include the highest order term plus all lower order terms (significant or not)[@ostertagová2012] .
+
+Linear:
+
+$$
+Y_{\text{cognitive\_load}} = \beta_0 
++ \beta_1 X_{\text{time\_spent}}
+$$
+
+Quadratic:
+
+$$
+Y_{\text{cognitive\_load}} = \beta_0 
++ \beta_1 X_{\text{time\_spent}} 
++ \beta_2 X_{\text{time\_spent}}^2
+$$
+
+Cubic:
+
+$$
+Y_{\text{cognitive\_load}} = \beta_0 
++ \beta_1 X_{\text{time\_spent}} 
++ \beta_2 X_{\text{time\_spent}}^2 
++ \beta_3 X_{\text{time\_spent}}^3
+$$ Why or when should we use polynomial regression?
+
+-   When after modeling a regression model and identifying a curvelinear relationship between the response and explanatory variables.
+
+-   Despite adding exponential terms the model remains a linear regression model because the coefficients are linear.
+
+```{r data}
+#| echo: false
+#| message: false
+#| warning: false
+#| results: hide
+
+# Step 1: Enter data as a vector
+raw <- c(
+1, 6.6, -45.4, 
+21,8.4, -106.5, 
+41, 8, -95.8, 
+2,10.1, -176.6, 22,
+7.2, -63, 42,
+8.9, -126.2, 
+3, 8.9,-127.1, 
+23, 13.2,-362.2, 
+43, 10.1,
+-179.5, 4, 6,
+-31.1, 24, 7.1,
+-61, 44, 11.5,
+-252.6, 
+5, 13.3, -366.6,
+25, 10.4, -194,
+45, 12.9, -338.5,
+6, 6.9, -53.3,
+26, 10.8, -216.4,
+46, 8.1, -97.3,
+7, 9, -131.1,
+27, 11.9, -278.1,
+47, 14.9, -480.5,
+8, 12.6, -320.9,
+28, 9.7, -162.7,
+48, 13.7, -393.6,
+9, 10.6, -204.8,
+29, 5.4, -21.3,
+49, 7.8, -87.6,
+10, 10.3, -189.2,
+30, 12.1, -284.8,
+50, 8.5, -105.4,
+11, 14.1, -421.2,
+31, 12.1, -287.5,
+12, 8.6, -113.1,
+32, 12.1, -290.8,
+13, 14.9, -482.3,
+33, 9.2, -137.4,
+14, 6.5, -42.9,
+34, 6.7, -47.7,
+15, 9.3, -144.8,
+35, 12.1, -292.3,
+16, 5.2, -14.2,
+36, 13.2, -356.4,
+17, 10.7, -211.3,
+37, 11, -228.5,
+18, 7.5, -75.4,
+38, 13.1, -354.4,
+19, 14.9, -482.7,
+39, 9.2, -137.2,
+20, 12.2, -295.6,
+40, 13.2, -361.6
+)
+
+# Step 2: Convert to dataframe
+df <- matrix(raw, ncol = 3, byrow = TRUE)
+df <- as.data.frame(df)
+colnames(df) <- c("ID", "time_spent", "cognitive_load")
+# Ordering the first column 
+df <- df %>%
+  arrange(ID)
+
+write.csv(df, "immersivedata.csv", row.names = FALSE)
+
+```
+
+## Hypotheses
+
+HO: $\beta_2=\beta_3= 0$; There is no difference between modeling a linear trend and a quadratic trend. The linear trend in time spent in a virtual reality course is no different from its quadratic trend.
+
+HA: $beta_2\ne\beta_3$; There is a difference between modeling a linear trend and a quadratic trend. The quadratic term better models the trend in time spent in virtual reality than the linear term.
+
+## Techniques for Employing a Polynomial Regression
+
+-   Forward procedure: Add a degree term one at a time until a significant term is found. Caveat: this approach may fail to find the best exponential degree term because it stops a researcher from modeling other exponential terms.
+
+-   Backward procedure: Start with the high degree term and remove one term at a time until a significant term is found. Problem: Researchers may struggle with determining the best starting point. [@seber2003] recommends not exceeding 6 degrees, as the model may not be estimable.
+
+## General problems with Polynomial Regession
+
+-   Forward and backward procedures may not lead to modeling the same trend.
+
+-   Researchers may find the terms difficult to interpret or confusing.
+
+## Analytical Steps
+
+-   Run a linear regression.
+    -   Determine if assumptions of linear regression hold
+        -   Linearity: The linearity assumption assumes that the relationship between the dependent variable (Y) and independent variable(s) (X) is linear. To check this assumption, you can create scatterplots and evaluate the linearity of the data.
+        -   Independence of Residuals: The independence of residuals assumes that the errors (residuals) are not correlated with each other. Check independence assumption by examining a plot of residuals against the order of observations.
+        -   Homoscedasticity: Homoscedasticity suggests that the variance of residuals is constant across all levels of the independent variable. In other words, the spread of residuals should be roughly the same for all values of X. Check this assumption by creating a plot of residuals against the fitted values.
+        -   Normality of Residuals: The normality of the residuals assumption assumes that the residuals follow a normal distribution. A Q-Q plot and normality tests like the Shapiro-Wilk test can help assess this assumption.
+-   Identified a non-linear trend from assumption checking.
+-   Decide whether to use a backward or forward procedure.
+-   Run the polynomial regression and determine the best trend.
+
+# Example Polynomial Regression
+
+### Read in the in the data
+
+```{r Read}
+#| message: false
+#| warning: false
+# Read in the data using the read_csv
+immersivedata <- read_csv("immersivedata.csv")
+```
+
+### Run a linear regression
+
+```{r Linearmodel}
+#Use the lm function in R to run a linear regression
+modellm <- lm(cognitive_load~ time_spent, data =  immersivedata)
+#print the coefficients by typing model label
+modellm
+#use the summary function to get model fit information 
+summary(modellm)
+```
+
+### Create scatterplots to determine if you have met assumptions and to determine if the data is linear
+
+```{r Linearity}
+immersivedata %>% 
+ggplot(aes(x = time_spent, y = cognitive_load)) + geom_point() + geom_smooth(method = "lm")
+
+```
+
+[ The data appear to curve away from a linear model trend. This suggests we may need to use a polynomial regression model ]{style="color: blue;"}
+
+### Plots to evaluate the regression
+
+**Residuals-versus-fitted-values plot**
+
+-   In the following graph we plot model residuals against the fitted values.
+-   The x-axis represents the fitted or predicted values of cognitive load and the y-axis contains residual values.
+-   In this graph we want all the values to be scattered randomly around 0, suggesting that there is no pattern between the fitted and residuals.
+
+```{r Plots}
+#plot(modellm)
+```
+
+```{r}
+#| echo: false
+plot(modellm , which = 1)  # Residuals vs Fitted
+```
+
+[ A visual inspection of the residuals-versus-fitted-values plot suggests that we have not met the assumptions of linearity or homoscedasticity. The violation of homoscedasticity means that the variance of residuals is not constant across all levels of the independent variable. The observed pattern suggests we may need to use polynomial regression. ]{style="color: blue;"}
+
+**QQ-plot** \* The QQ-plot helps determine whether residuals are normally distributed an important assumption of regression.
+
+-   The residuals' observed percentiles on the y-axis against expected theoretical values on the x-axis.
+
+-   Points should form a straight diagonal line if the data is normal.
+
+```{r}
+#| echo: false
+plot(modellm , which = 2)  # Q-Q plot
+```
+
+[ A visual inspection of the QQ plot suggests that we have not met the assumptions of normality, because residuals deviate from the diagonal line. ]{style="color: blue;"}
+
+**Outlier Plots**
+
+-   Two plots can help evaluate if observations or cases are considered outliers, Cook's distance and residuals-versus-leverage plots.
+
+-   **Cook's Distance** is a diagnostic tool for determining whether an observation is disproportionately influencing the results relative to other observations. We can plot each case's Cook's Distance value against the others.
+
+-   **Leverage** is a tool that helps determine whether an observation or case's explanatory value is far from that of all other cases. The greater the distance, the greater the potential that the case is influencing the model.
+
+-   The Cook's Distance plot can be used to identify cases that may be considered influential. Cook's values are represented on the y-axis, and cases are listed on the x-axis.
+
+-   The residual-versus-leverage plot contains leverage values on the x-axis and standardized residuals on the y-axis. Points should be scattered around 0 with no pattern. Points farther to the right in the plot suggest that the standardized residuals have higher leverage. Residuals above or below 0 suggest that the residuals are large. The Residuals that fall beyond the Cook's distance, as suggested, may be influential.
+
+```{r}
+#| echo: false
+plot(modellm , which = 4)  # Cook's Distance values
+```
+
+[ A visual inspection of Cook's distance values suggest that cases 16, 19, and 29 may be influential. ]{style="color: blue;"}
+
+```{r}
+#| echo: false
+plot(modellm , which = 5)  # Residuals vs Leverage
+```
+
+[ A visual inspection of the residual-versus-leverage suggest that cases 16, 19, and 29 may be extreme values and pass the Cook's distance threshold on the plot. ]{style="color: blue;"}
+
+### Run a Polynomial Regression
+
+-   Use the lm model because we still want our Beta coefficients to be modeled linearly.
+-   Use poly function to specify the degree we want to apply to students' time spent in the virtual reality course.
+-   I decided to us the "backward method" starting with a higher term greater than 2 because the plot suggests that a quadratic or a degree of two may be best.
+
+```{r Cubic}
+model_3 <- lm(cognitive_load ~ poly(time_spent, 3), data = immersivedata)
+summary(model_3)
+```
+
+[ The cubic model suggests that time spent modeled using a cubic function does not significantly predict cognitive load. ]{style="color: blue;"}
+
+```{r Quad}
+model_2 <- lm(cognitive_load ~ poly(time_spent, 2), data = immersivedata)
+summary(model_2)
+```
+
+[ The quadratic model suggests that time spent modeled using a quadratic function, or to the second degree term, significantly predicts cognitive load. ]{style="color: blue;"}
+
+## Check model fit again
+
+```{r PlotFit}
+plot(model_2)
+```
+
+## Interpret
+
+Interpret the model as a whole.
+
+Time spent in a virtual reality course squared is a significant predictor in the quadratic model ($p < .05$) with an $F =109800 (\text{df} = 2, 47), p < .05$. Approximately, 99.9% of the variation in the cognitive load is explained by taking into account a quadratic function of the time spent in virtual reality course.
